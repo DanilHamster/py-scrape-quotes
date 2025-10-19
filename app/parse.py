@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass, fields, astuple
+from typing import List
 
 import requests
 from bs4 import BeautifulSoup, Tag
@@ -11,22 +12,26 @@ class Quote:
     author: str
     tags: list[str]
 
+
 PRODUCT_FIELDS = [field.name for field in fields(Quote)]
 
 BASE_URL = "https://quotes.toscrape.com/"
+
 
 def parse_product(quote: Tag) -> Quote:
     return Quote(
         text=quote.select_one(".text").text,
         author=quote.select_one(".author").text,
-        tags=[tag.text for tag in quote.select(".tag")]
+        tags=[tag.text for tag in quote.select(".tag")],
     )
 
-def get_single_quote(soup):
+
+def get_single_quote(soup: Tag) -> List[Quote]:
     quotes = soup.select(".quote")
     return [parse_product(quote) for quote in quotes]
 
-def get_page_nums():
+
+def get_page_nums() -> int:
     page = 1
     while True:
         text = requests.get(BASE_URL + f"page/{page}").content
@@ -36,7 +41,8 @@ def get_page_nums():
         page += 1
     return page
 
-def get_parses():
+
+def get_parses() -> List[Quote]:
     all_quotes = []
     page_num = get_page_nums()
     for page in range(1, page_num + 1):
@@ -52,6 +58,7 @@ def write_to_csv(quotes: [Quote], output_csv_path: str) -> None:
         writer = csv.writer(f)
         writer.writerow(PRODUCT_FIELDS)
         writer.writerows([astuple(quote) for quote in quotes])
+
 
 def main(output_csv_path: str) -> None:
     write_to_csv(get_parses(), output_csv_path)
