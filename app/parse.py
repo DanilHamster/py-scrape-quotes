@@ -31,23 +31,16 @@ def get_single_quote(soup: Tag) -> List[Quote]:
     return [parse_product(quote) for quote in quotes]
 
 
-def get_page_nums() -> int:
+def get_quotes() -> List[Quote]:
     page = 1
+    all_quotes = []
     while True:
         text = requests.get(BASE_URL + f"page/{page}").content
         soup = BeautifulSoup(text, "html.parser")
         if not soup.select(".next"):
+            all_quotes.extend(get_single_quote(soup))
             break
         page += 1
-    return page
-
-
-def get_parses() -> List[Quote]:
-    all_quotes = []
-    page_num = get_page_nums()
-    for page in range(1, page_num + 1):
-        text = requests.get(BASE_URL + f"page/{page}").content
-        soup = BeautifulSoup(text, "html.parser")
         all_quotes.extend(get_single_quote(soup))
     return all_quotes
 
@@ -61,7 +54,7 @@ def write_to_csv(quotes: [Quote], output_csv_path: str) -> None:
 
 
 def main(output_csv_path: str) -> None:
-    write_to_csv(get_parses(), output_csv_path)
+    write_to_csv(get_quotes(), output_csv_path)
 
 
 if __name__ == "__main__":
